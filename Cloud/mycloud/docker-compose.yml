@@ -1,0 +1,87 @@
+version: "3.9"
+
+services:
+
+    redis:
+        image: redis:7-alpine
+        restart: unless-stopped
+        networks:
+            - mycloud_net
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 5s
+            timeout: 3s
+            retries: 5
+
+    data_base:
+        image: postgres:16-alpine
+        restart: unless-stopped
+        environment:
+            POSTGRES_USER:      admin
+            POSTGRES_PASSWORD:  admin
+            POSTGRES_DB:        admin
+        volumes:
+            - pg_data:/var/lib/postgresql/data
+        networks:
+            - mycloud_net
+        healtcheck:
+            test: ["CMD-SHELL", "pg_isready -U admin -d mycloud_db"]
+            interval: 5s
+            timeout: 3s
+            retries: 10
+
+    backend:
+        build:
+            context: ./backend
+            dockerfie: Dockerfile
+        restart: unless-stopped
+        ports:
+            -"5000:5000"
+        volumes:
+            - uploads_data:/app/data/uploads
+            - jobs_data:/app/data/jobs
+        environment:
+            DATABASE_URL: postgresql://admin:admin@data_base:5432/mycloud_db
+            CELERY_BROKER: redis://redis:6379/0
+            CELERY_BACKEND: redis://redis:6379/0
+            JWT_SECRET:     mysecretkey
+        depends_on:
+            data_base:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+        networks:
+            - mycloud_net
+        command: >
+            sh -c "
+                python -c 'from app import app, db; app.app_context().__enter__(); db.create_all()'
+                && gunicorn --bind 0.0.0.0:5000 --workers 2 --timeout 120 app:app
+            "
+    worker:
+        build:
+            context: ./worker
+            dockerfile: DOckerfile
+        restart: unless-stopped
+        volumes:
+            - jobs_data:/app/data/jobs
+        environment:
+            DATABASE_URL: postgresql://admin:admin@data_base:5432/mycloud_db
+            CELERY_BROKER: redis://redis:6379/0
+            CELERY_BACKEND: redis://redis:6379/0
+            JOB_TIMEOUT: "60"
+        depends_on:
+            redis:
+                condition: service_healthy
+            data_base:
+                condition: service_healthy
+        networks:
+            - mycloud_net
+
+volumes:
+    pg_data:
+    uploads_data:
+    jobs_data:
+
+networks:
+    mycloud_net:
+        name: mycloud_net
