@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="logo_branco.png">
+    <title>GridLock — Storage</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0d0d0d; color: #f0f0f8; font-family: sans-serif; min-height: 100vh; }
+        nav { display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; height: 56px; background: #111827; border-bottom: 1px solid #1e3a4a; }
+        .logo { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: bold; color: #f0f0f8; }
+        .logo a { text-decoration: none; }
+        .logo span { color: #00e5ff; }
+        .nav-links { display: flex; gap: 4px; }
+        .nav-links a { padding: 6px 14px; border-radius: 8px; font-size: 14px; color: #6b7280; text-decoration: none; transition: all 0.15s; }
+        .nav-links a:hover, .nav-links a.active { color: #f0f0f8; background: #1f2937; }
+        .nav-right { display: flex; align-items: center; }
+        .usage-vbar { width: 6px; height: 40px; background: #1f2937; border-radius: 4px; overflow: hidden; display: flex; align-items: flex-end; }
+        .usage-vbar-fill { width: 100%; height: 0%; background: #00e5ff; border-radius: 4px; transition: height 0.4s, background 0.4s; }
+        .btn-avatar { width: 38px; height: 38px; border-radius: 50%; background: #1a73e8; border: none; color: white; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+        .hero { padding: 2rem 0; margin-bottom: 1.5rem; border-bottom: 1px solid #1e3a4a; }
+        .hero h1 { font-size: 32px; font-weight: bold; margin-bottom: 6px; }
+        .hero h1 span { color: #00e5ff; }
+        .hero p { color: #6b7280; font-size: 15px; }
+        .quota-card { background: #111827; border: 1px solid #1e3a4a; border-radius: 16px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; }
+        .quota-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+        .quota-title { font-size: 13px; font-family: monospace; color: #00e5ff; }
+        .tier-pill { font-size: 12px; font-weight: bold; padding: 3px 12px; border-radius: 20px; background: rgba(0,229,160,0.15); color: #00e5a0; }
+        .bar { height: 10px; background: #1f2937; border-radius: 6px; overflow: hidden; }
+        .bar-fill { height: 100%; background: #00e5ff; width: 0%; transition: width 0.4s, background 0.4s; }
+        .bar-fill.warn { background: #f0c040; }
+        .bar-fill.full { background: #ff5566; }
+        .quota-text { font-size: 12px; color: #6b7280; margin-top: 6px; font-family: monospace; }
+        .plan-picker { display: flex; gap: 8px; margin-top: 14px; }
+        .plan { flex: 1; background: #1f2937; border: 1px solid #374151; border-radius: 10px; padding: 10px; text-align: center; cursor: pointer; transition: all 0.15s; }
+        .plan:hover { border-color: #00e5ff; }
+        .plan.current { border-color: #00e5a0; background: rgba(0,229,160,0.08); }
+        .plan .pname { font-size: 14px; font-weight: bold; color: #f0f0f8; }
+        .plan .plimit { font-size: 12px; color: #6b7280; margin-top: 2px; }
+        .plan .ptag { font-size: 10px; color: #00e5a0; margin-top: 4px; height: 12px; }
+        .tabs { display: flex; gap: 4px; border-bottom: 1px solid #1e3a4a; margin-bottom: 1.5rem; }
+        .tab { background: none; border: none; border-bottom: 2px solid transparent; padding: 8px 16px; color: #6b7280; font-size: 14px; font-family: sans-serif; cursor: pointer; margin-bottom: -1px; transition: all 0.15s; }
+        .tab.active { color: #00e5ff; border-bottom-color: #00e5ff; }
+        .panel { display: none; }
+        .panel.active { display: block; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
+        .card { background: #111827; border: 1px solid #1e3a4a; border-radius: 16px; padding: 1.5rem; }
+        .card-title { font-size: 13px; font-weight: bold; color: #00e5ff; margin-bottom: 1rem; font-family: monospace; }
+        label { display: block; font-size: 12px; color: #6b7280; margin-bottom: 5px; margin-top: 12px; }
+        label:first-of-type { margin-top: 0; }
+        input { width: 100%; padding: 9px 12px; background: #1f2937; border: 1px solid #374151; border-radius: 8px; color: #fff; font-size: 14px; font-family: sans-serif; outline: none; transition: border 0.15s; }
+        input:focus { border-color: #00e5ff; }
+        input[type=file] { padding: 6px 12px; cursor: pointer; }
+        select { width: 100%; padding: 9px 12px; background: #1f2937; border: 1px solid #374151; border-radius: 8px; color: #fff; font-size: 14px; outline: none; }
+        select:focus { border-color: #00e5ff; }
+        button { margin-top: 1rem; width: 100%; padding: 10px; background: #00e5ff; border: none; border-radius: 8px; color: #000; font-size: 14px; font-weight: bold; font-family: sans-serif; cursor: pointer; transition: opacity 0.15s; }
+        button:hover { opacity: 0.85; }
+        button.secondary { background: #1f2937; border: 1px solid #374151; color: #f0f0f8; font-weight: normal; }
+        button.danger { background: rgba(255,85,102,0.15); border: 1px solid #ff5566; color: #ff5566; font-weight: normal; }
+        .list-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: #1f2937; border-radius: 8px; margin-bottom: 6px; font-size: 13px; }
+        .list-item span { color: #f0f0f8; }
+        .list-item small { color: #6b7280; margin-left: 8px; }
+        .file-actions { display: flex; gap: 4px; }
+        .btn-del { background: none; border: none; color: #ff5566; cursor: pointer; font-size: 16px; padding: 0; margin: 0; width: auto; }
+        .btn-dl { background: none; border: none; cursor: pointer; font-size: 16px; padding: 0; margin: 0; width: auto; }
+        .empty-msg { color: #6b7280; font-size: 13px; margin-top: 8px; }
+        .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #1f2937; border: 1px solid #374151; border-radius: 8px; padding: 10px 20px; font-size: 13px; color: #00e5a0; z-index: 999; display: none; }
+        .toast.error { color: #ff5566; border-color: #ff5566; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; }
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111827; border: 1px solid #1e3a4a; border-radius: 16px; padding: 2rem; width: 360px; z-index: 101; text-align: center; }
+        .modal h3 { color: #ff5566; font-size: 16px; margin-bottom: 0.5rem; }
+        .modal p { color: #6b7280; font-size: 14px; margin-bottom: 1.5rem; }
+        .modal-buttons { display: flex; gap: 8px; }
+        .modal-buttons button { margin-top: 0; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo"><img src="logo_branco.png" style="height:50px;"><a href="dashboard.html"><span>GridLock</span></a></div>
+        <div class="nav-right">
+            <div style="display:flex;align-items:center;gap:8px;"><div class="usage-vbar" id="avatarVbar" title="Storage usage"><div class="usage-vbar-fill" id="avatarVbarFill"></div></div><button class="btn-avatar" id="navAvatar" onclick="window.location.href='dashboard.html'">?</button></div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="hero">
+            <h1>Storage <span>Service</span></h1>
+            <p>Swift object storage — port 5002</p>
+        </div>
+
+        <!-- Quota / Tier -->
+        <div class="quota-card">
+            <div class="quota-head">
+                <span class="quota-title">// storage plan</span>
+                <span class="tier-pill" id="tier-pill">–</span>
+            </div>
+            <div class="bar"><div class="bar-fill" id="bar-fill"></div></div>
+            <div class="quota-text" id="quota-text">Loading usage...</div>
+            <div class="plan-picker" id="plan-picker"></div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('buckets')">Buckets</button>
+            <button class="tab" onclick="switchTab('files')">Files</button>
+        </div>
+
+        <div class="panel active" id="panel-buckets">
+            <div class="grid">
+                <div class="card">
+                    <div class="card-title">// create bucket</div>
+                    <label>Bucket Name</label>
+                    <input id="bucket-name" placeholder="my-dataset">
+                    <button onclick="createBucket()">Create Bucket</button>
+                </div>
+                <div class="card">
+                    <div class="card-title">// my buckets</div>
+                    <button onclick="loadBuckets()" class="secondary" style="margin-top:0">Refresh</button>
+                    <div id="bucket-list" style="margin-top:1rem;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel" id="panel-files">
+            <div class="grid">
+                <div class="card">
+                    <div class="card-title">// upload file</div>
+                    <label>Bucket</label>
+                    <select id="upload-bucket">
+                        <option value="">Select a bucket...</option>
+                    </select>
+                    <label>File</label>
+                    <input type="file" id="upload-file">
+                    <button onclick="uploadFile()">Upload File</button>
+                </div>
+                <div class="card" style="grid-column: span 2;">
+                    <div class="card-title">// browse files</div>
+                    <label>Bucket</label>
+                    <select id="browse-bucket" onchange="browseFiles()">
+                        <option value="">Select a bucket...</option>
+                    </select>
+                    <div id="file-list" style="margin-top:1rem;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <div class="modal-overlay" id="modalOverlay"></div>
+    <div class="modal" id="confirmModal">
+        <h3>⚠️ Delete</h3>
+        <p id="confirmMsg">Are you sure?</p>
+        <div class="modal-buttons">
+            <button class="danger" id="confirmBtn">Delete</button>
+            <button class="secondary" onclick="closeConfirm()">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = 'auth.html';
+
+        let username = '';
+        let currentTier = '';
+        let tierList = [];
+
+        function fmtBytes(b) {
+            if (b == null) return '∞';
+            if (b < 1024) return b + ' B';
+            if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+            if (b < 1024*1024*1024) return (b/(1024*1024)).toFixed(1) + ' MB';
+            return (b/(1024*1024*1024)).toFixed(2) + ' GB';
+        }
+
+        async function loadUser() {
+            try {
+                const res = await fetch('http://localhost:5001/profile', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await res.json();
+                username = data.email;
+                currentTier = data.storage_tier;
+                document.getElementById('navAvatar').textContent = data.first_name.charAt(0).toUpperCase();
+                document.getElementById('navAvatar').style.background = data.avatar_color || '#1a73e8';
+                loadAvatarUsage();
+                document.getElementById('tier-pill').textContent = data.storage_label + ' · ' + fmtBytes(data.storage_limit_bytes);
+                await loadTiers();
+                await loadBuckets();
+                await loadUsage();
+            } catch(e) { console.log('Could not load profile'); }
+        }
+
+        async function loadTiers() {
+            try {
+                const r = await fetch('http://localhost:5001/tiers');
+                tierList = await r.json();
+                renderPicker();
+            } catch(e) { console.log('Could not load tiers'); }
+        }
+
+        function renderPicker() {
+            const picker = document.getElementById('plan-picker');
+            picker.innerHTML = tierList.map(function(t) {
+                const cur = t.key === currentTier;
+                return '<div class="plan' + (cur ? ' current' : '') + '" onclick="changeTier(\'' + t.key + '\')">' +
+                    '<div class="pname">' + t.label + '</div>' +
+                    '<div class="plimit">' + fmtBytes(t.limit_bytes) + '</div>' +
+                    '<div class="ptag">' + (cur ? 'current' : '') + '</div>' +
+                    '</div>';
+            }).join('');
+        }
+
+        async function changeTier(key) {
+            if (key === currentTier) return;
+            try {
+                const r = await fetch('http://localhost:5001/profile/tier', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ storage_tier: key })
+                });
+                const d = await r.json();
+                if (!r.ok) { toast('Error: ' + (d.error || r.status), 'error'); return; }
+                currentTier = key;
+                const t = tierList.find(function(x){ return x.key === key; });
+                document.getElementById('tier-pill').textContent = t.label + ' · ' + fmtBytes(t.limit_bytes);
+                renderPicker();
+                toast('Plan changed to ' + d.storage_label);
+                await loadUsage();
+                loadAvatarUsage();
+            } catch(e) { toast('Failed to update plan', 'error'); }
+        }
+
+        async function loadUsage() {
+            try {
+                const r = await fetch('http://localhost:5002/usage?username=' + encodeURIComponent(username));
+                const d = await r.json();
+                const used = d.used_bytes || 0;
+                const limit = d.limit_bytes;
+                const fill = document.getElementById('bar-fill');
+                const text = document.getElementById('quota-text');
+                if (limit) {
+                    const pct = Math.min(100, (used / limit) * 100);
+                    fill.style.width = pct + '%';
+                    fill.className = 'bar-fill' + (pct >= 100 ? ' full' : (pct >= 80 ? ' warn' : ''));
+                    text.textContent = fmtBytes(used) + ' of ' + fmtBytes(limit) + ' used (' + pct.toFixed(1) + '%)';
+                } else {
+                    fill.style.width = '0%';
+                    text.textContent = fmtBytes(used) + ' used';
+                }
+            } catch(e) { document.getElementById('quota-text').textContent = 'Could not load usage'; }
+        }
+
+        function switchTab(name) {
+            const order = ['buckets', 'files'];
+            document.querySelectorAll('.tab').forEach(function(t, i) {
+                t.classList.toggle('active', order[i] === name);
+            });
+            document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
+            document.getElementById('panel-' + name).classList.add('active');
+        }
+
+        function toast(msg, type) {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.className = 'toast' + (type === 'error' ? ' error' : '');
+            el.style.display = 'block';
+            setTimeout(function(){ el.style.display = 'none'; }, 3500);
+        }
+
+        function confirm(msg, onConfirm) {
+            document.getElementById('confirmMsg').textContent = msg;
+            document.getElementById('confirmModal').style.display = 'block';
+            document.getElementById('modalOverlay').style.display = 'block';
+            document.getElementById('confirmBtn').onclick = function(){ closeConfirm(); onConfirm(); };
+        }
+        function closeConfirm() {
+            document.getElementById('confirmModal').style.display = 'none';
+            document.getElementById('modalOverlay').style.display = 'none';
+        }
+
+        async function loadBuckets() {
+            try {
+                const r = await fetch('http://localhost:5002/container/list?username=' + encodeURIComponent(username));
+                const buckets = await r.json();
+                const list = document.getElementById('bucket-list');
+                if (buckets.length === 0) {
+                    list.innerHTML = '<p class="empty-msg">No buckets yet</p>';
+                } else {
+                    list.innerHTML = buckets.map(function(b){
+                        return '<div class="list-item"><span>📦 ' + b + '</span>' +
+                            "<button class='btn-del' onclick=\"confirmDeleteBucket('" + b.replace(username + '-', '') + "')\">🗑️</button></div>";
+                    }).join('');
+                }
+                ['upload-bucket', 'browse-bucket'].forEach(function(id) {
+                    const sel = document.getElementById(id);
+                    sel.innerHTML = '<option value="">Select a bucket...</option>';
+                    buckets.forEach(function(b) {
+                        const opt = document.createElement('option');
+                        opt.value = b.replace(username + '-', '');
+                        opt.textContent = b;
+                        sel.appendChild(opt);
+                    });
+                });
+            } catch(e) { console.log('Could not load buckets'); }
+        }
+
+        async function createBucket() {
+            const name = document.getElementById('bucket-name').value;
+            if (!name) return;
+            try {
+                await fetch('http://localhost:5002/container/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username, container_name: name })
+                });
+                document.getElementById('bucket-name').value = '';
+                toast('Bucket created!');
+                await loadBuckets();
+            } catch(e) { toast('Error creating bucket', 'error'); }
+        }
+
+        function confirmDeleteBucket(name) {
+            confirm('Delete bucket "' + name + '" and all its files?', function(){ deleteBucket(name); });
+        }
+        async function deleteBucket(name) {
+            try {
+                await fetch('http://localhost:5002/container/delete', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username, container_name: name })
+                });
+                toast('Bucket deleted!');
+                await loadBuckets();
+                await loadUsage();
+                loadAvatarUsage();
+            } catch(e) { toast('Error deleting bucket', 'error'); }
+        }
+
+        async function uploadFile() {
+            const bucket = document.getElementById('upload-bucket').value;
+            const file = document.getElementById('upload-file').files[0];
+            if (!bucket || !file) { toast('Select a bucket and file', 'error'); return; }
+            try {
+                const fd = new FormData();
+                fd.append('username', username);
+                fd.append('container_name', bucket);
+                fd.append('file', file);
+                const r = await fetch('http://localhost:5002/file/upload', { method: 'POST', body: fd });
+                const d = await r.json().catch(function(){ return {}; });
+                if (r.status === 413) {
+                    toast('Quota exceeded — ' + fmtBytes(d.used_bytes) + ' used of ' + fmtBytes(d.limit_bytes) + '. Upgrade your plan.', 'error');
+                    return;
+                }
+                if (!r.ok) { toast('Upload failed: ' + (d.message || r.status), 'error'); return; }
+                toast('File uploaded!');
+                if (document.getElementById('browse-bucket').value === bucket) browseFiles();
+                await loadUsage();
+                loadAvatarUsage();
+            } catch(e) { toast('Error uploading file', 'error'); }
+        }
+
+        function downloadFile(bucket, filename) {
+            const url = 'http://localhost:5002/file/download?username=' + encodeURIComponent(username) + '&container_name=' + encodeURIComponent(bucket) + '&object_name=' + encodeURIComponent(filename);
+            window.location.href = url;
+        }
+
+        async function browseFiles() {
+            const bucket = document.getElementById('browse-bucket').value;
+            const list = document.getElementById('file-list');
+            if (!bucket) { list.innerHTML = ''; return; }
+            try {
+                const r = await fetch('http://localhost:5002/file/list?username=' + encodeURIComponent(username) + '&container_name=' + encodeURIComponent(bucket));
+                const files = await r.json();
+                if (files.length === 0) { list.innerHTML = '<p class="empty-msg">No files in this bucket</p>'; return; }
+                list.innerHTML = files.map(function(f){
+                    return '<div class="list-item"><div><span>📄 ' + f.name + '</span>' +
+                        '<small>' + (f.size_bytes / 1024).toFixed(1) + ' KB</small></div>' +
+                        '<div class="file-actions">' +
+                        "<button class='btn-dl' title='Download' onclick=\"downloadFile('" + bucket + "','" + f.name + "')\">⬇️</button>" +
+                        "<button class='btn-del' title='Delete' onclick=\"confirmDeleteFile('" + bucket + "','" + f.name + "')\">🗑️</button>" +
+                        '</div></div>';
+                }).join('');
+            } catch(e) {
+                list.innerHTML = '<p style="color:#ff5566;font-size:13px;">Error loading files</p>';
+            }
+        }
+
+        function confirmDeleteFile(bucket, filename) {
+            confirm('Delete file "' + filename + '"?', function(){ deleteFile(bucket, filename); });
+        }
+        async function deleteFile(bucket, filename) {
+            try {
+                await fetch('http://localhost:5002/file/delete', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username, container_name: bucket, object_name: filename })
+                });
+                toast('File deleted!');
+                browseFiles();
+                await loadUsage();
+                loadAvatarUsage();
+            } catch(e) { toast('Error deleting file', 'error'); }
+        }
+
+        async function loadAvatarUsage() {
+            if (!username) return;
+            try {
+                const r = await fetch('http://localhost:5002/usage?username=' + encodeURIComponent(username));
+                const d = await r.json();
+                const used = d.used_bytes || 0;
+                const limit = d.limit_bytes;
+                const fill = document.getElementById('avatarVbarFill');
+                const bar = document.getElementById('avatarVbar');
+                if (!fill) return;
+                let pct = limit ? Math.min(100, (used / limit) * 100) : 0;
+                fill.style.height = pct + '%';
+                let color = pct >= 100 ? '#ff5566' : (pct >= 80 ? '#f0c040' : '#00e5ff');
+                fill.style.background = color;
+                if (bar) bar.title = 'Storage: ' + pct.toFixed(0) + '% used';
+            } catch(e) { /* storage service may be down */ }
+        }
+
+        loadUser();
+    </script>
+</body>
+</html>

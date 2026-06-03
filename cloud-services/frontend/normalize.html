@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   	<link rel="icon" type="image/x-icon" href="logo_branco.png"> 
+	<title>GridLock — Normalization</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0d0d0d; color: #f0f0f8; font-family: sans-serif; min-height: 100vh; }
+        nav { display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; height: 56px; background: #111827; border-bottom: 1px solid #1e3a4a; }
+        .logo { font-size: 18px; font-weight: bold; color: #f0f0f8; }
+        .logo span { color: #00e5ff; }
+        .nav-links { display: flex; gap: 4px; }
+        .nav-links a { padding: 6px 14px; border-radius: 8px; font-size: 14px; color: #6b7280; text-decoration: none; transition: all 0.15s; }
+        .nav-links a:hover, .nav-links a.active { color: #f0f0f8; background: #1f2937; }
+        .nav-right { display: flex; align-items: center; }
+        .usage-vbar { width: 6px; height: 40px; background: #1f2937; border-radius: 4px; overflow: hidden; display: flex; align-items: flex-end; }
+        .usage-vbar-fill { width: 100%; height: 0%; background: #00e5ff; border-radius: 4px; transition: height 0.4s, background 0.4s; }
+        .btn-avatar { width: 38px; height: 38px; border-radius: 50%; background: #1a73e8; border: none; color: white; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+        .hero { padding: 2rem 0; margin-bottom: 2rem; border-bottom: 1px solid #1e3a4a; }
+        .hero h1 { font-size: 32px; font-weight: bold; margin-bottom: 6px; }
+        .hero h1 span { color: #00e5ff; }
+        .hero p { color: #6b7280; font-size: 15px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
+        .card { background: #111827; border: 1px solid #1e3a4a; border-radius: 16px; padding: 1.5rem; }
+        .card.full { grid-column: 1 / -1; }
+        .card-title { font-size: 13px; font-weight: bold; color: #00e5ff; margin-bottom: 1rem; font-family: monospace; }
+        label { display: block; font-size: 12px; color: #6b7280; margin-bottom: 5px; margin-top: 12px; }
+        label:first-of-type { margin-top: 0; }
+        input { width: 100%; padding: 9px 12px; background: #1f2937; border: 1px solid #374151; border-radius: 8px; color: #fff; font-size: 14px; font-family: sans-serif; outline: none; transition: border 0.15s; }
+        input:focus { border-color: #00e5ff; }
+        input[type=file] { padding: 6px 12px; cursor: pointer; }
+        select { width: 100%; padding: 9px 12px; background: #1f2937; border: 1px solid #374151; border-radius: 8px; color: #fff; font-size: 14px; outline: none; }
+        select:focus { border-color: #00e5ff; }
+        .warn { background: rgba(255,180,0,0.1); border: 1px solid #d9a400; color: #f0c040; border-radius: 8px; padding: 8px 10px; font-size: 12px; margin-top: 12px; }
+        button { margin-top: 1rem; width: 100%; padding: 10px; background: #00e5ff; border: none; border-radius: 8px; color: #000; font-size: 14px; font-weight: bold; font-family: sans-serif; cursor: pointer; transition: opacity 0.15s; }
+        button:hover { opacity: 0.85; }
+        button.confirm { background: #00e5a0; }
+        button:disabled { background: #1f2937; color: #6b7280; cursor: not-allowed; }
+        .empty-msg { color: #6b7280; font-size: 13px; margin-top: 8px; }
+        .change-item { background: #1f2937; border: 1px solid #374151; border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; font-size: 13px; }
+        .change-item b { color: #00e5ff; }
+        .shape-line { font-family: monospace; font-size: 13px; color: #00e5a0; margin-bottom: 12px; }
+        .section-label { font-size: 12px; color: #6b7280; margin-top: 14px; margin-bottom: 6px; }
+        .table-wrap { overflow-x: auto; }
+        table { border-collapse: collapse; font-size: 12px; width: 100%; }
+        th, td { border: 1px solid #1e3a4a; padding: 5px 8px; text-align: left; white-space: nowrap; }
+        th { background: #1f2937; color: #00e5ff; font-family: monospace; }
+        td { color: #f0f0f8; }
+        .hidden { display: none; }
+        .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #1f2937; border: 1px solid #374151; border-radius: 8px; padding: 10px 20px; font-size: 13px; color: #00e5a0; z-index: 999; display: none; }
+        .toast.error { color: #ff5566; border-color: #ff5566; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo"><img src="logo_branco.png" style="height:50px;vertical-align:middle;margin-right:8px;"><a href="dashboard.html" style="text-decoration:none;"> <span>GridLock</span></a></div>
+        <div class="nav-right">
+            <div style="display:flex;align-items:center;gap:8px;"><div class="usage-vbar" id="avatarVbar" title="Storage usage"><div class="usage-vbar-fill" id="avatarVbarFill"></div></div><button class="btn-avatar" id="navAvatar" onclick="window.location.href='dashboard.html'">?</button></div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="hero">
+            <h1>Normalization <span>Service</span></h1>
+            <p>CSV cleaning — raw zone &rarr; clean zone (port 5003)</p>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <div class="card-title">// upload file</div>
+                <label>Bucket</label>
+                <select id="upload-bucket">
+                    <option value="">Select a bucket...</option>
+                </select>
+                <label>CSV File</label>
+                <input type="file" id="upload-file" accept=".csv">
+                <button onclick="uploadFile()">Upload File</button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">// select file</div>
+                <label>Bucket</label>
+                <select id="preview-bucket">
+                    <option value="">Select a bucket...</option>
+                </select>
+                <label>CSV filename</label>
+                <input id="object-name" placeholder="submission.csv">
+                <button onclick="previewNormalization()">Preview Cleaning</button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">// changes summary</div>
+                <div class="shape-line hidden" id="shape-line"></div>
+                <div id="changes-box">
+                    <p class="empty-msg">Run a preview to see proposed changes</p>
+                </div>
+                <button id="confirm-btn" class="confirm hidden" onclick="confirmNormalization()">Confirm &amp; Save to Clean Zone</button>
+            </div>
+
+            <div class="card full hidden" id="samples-card">
+                <div class="card-title">// before / after preview</div>
+                <div class="section-label">Original (raw)</div>
+                <div class="table-wrap" id="original-table"></div>
+                <div class="section-label">Cleaned</div>
+                <div class="table-wrap" id="cleaned-table"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = 'auth.html';
+
+        let username = '';
+        let currentFile = null;
+        let currentBucket = null;
+
+        async function loadUser() {
+            try {
+                const res = await fetch('http://localhost:5001/profile', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await res.json();
+                username = data.email;
+                document.getElementById('navAvatar').textContent = data.first_name.charAt(0).toUpperCase();
+                document.getElementById('navAvatar').style.background = data.avatar_color || '#1a73e8';
+                loadAvatarUsage();
+                await loadBuckets();
+            } catch(e) { console.log('Could not load profile'); }
+        }
+
+        async function loadBuckets() {
+            try {
+                const r = await fetch('http://localhost:5002/container/list?username=' + username);
+                const buckets = await r.json();
+                ['upload-bucket', 'preview-bucket'].forEach(function(id) {
+                    const sel = document.getElementById(id);
+                    sel.innerHTML = '<option value="">Select a bucket...</option>';
+                    buckets.forEach(function(b) {
+                        const opt = document.createElement('option');
+                        opt.value = b.replace(username + '-', '');
+                        opt.textContent = b;
+                        sel.appendChild(opt);
+                    });
+                });
+            } catch(e) { console.log('Could not load buckets'); }
+        }
+
+        async function uploadFile() {
+            const bucket = document.getElementById('upload-bucket').value;
+            const file = document.getElementById('upload-file').files[0];
+            if (!bucket || !file) { toast('Select a bucket and file', 'error'); return; }
+            try {
+                const fd = new FormData();
+                fd.append('username', username);
+                fd.append('container_name', bucket);
+                fd.append('file', file);
+                const r = await fetch('http://localhost:5002/file/upload', { method: 'POST', body: fd });
+                const data = await r.json().catch(function(){ return {}; });
+                if (!r.ok) { toast('Upload failed: ' + (data.error || r.status), 'error'); return; }
+                toast('File uploaded to ' + bucket + '!');
+                // sync the preview card so it's ready to go
+                document.getElementById('object-name').value = file.name;
+                document.getElementById('preview-bucket').value = bucket;
+            } catch(e) {
+                toast('Failed to fetch — is the storage service running on 5002?', 'error');
+            }
+        }
+
+        function toast(msg, type) {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.className = 'toast' + (type === 'error' ? ' error' : '');
+            el.style.display = 'block';
+            setTimeout(function(){ el.style.display = 'none'; }, 3000);
+        }
+
+        function renderTable(rows) {
+            if (!rows || rows.length === 0) return '<p class="empty-msg">No rows</p>';
+            const cols = Object.keys(rows[0]);
+            let html = '<table><thead><tr>' + cols.map(function(c){ return '<th>'+c+'</th>'; }).join('') + '</tr></thead><tbody>';
+            for (const row of rows) {
+                html += '<tr>' + cols.map(function(c){ return '<td>'+(row[c] === null ? '\u2205' : row[c])+'</td>'; }).join('') + '</tr>';
+            }
+            return html + '</tbody></table>';
+        }
+
+        function renderChanges(changes) {
+            const box = document.getElementById('changes-box');
+            if (!changes || Object.keys(changes).length === 0) {
+                box.innerHTML = '<p class="empty-msg">No changes needed &mdash; data already clean</p>';
+                return;
+            }
+            let html = '';
+            if (changes.renamed_columns)
+                html += '<div class="change-item"><b>Renamed columns:</b> ' + Object.entries(changes.renamed_columns).map(function(e){ return e[0]+' \u2192 '+e[1]; }).join(', ') + '</div>';
+            if (changes.nulls_filled)
+                html += '<div class="change-item"><b>Nulls filled:</b> ' + Object.entries(changes.nulls_filled).map(function(e){ return e[0]+' ('+e[1]+')'; }).join(', ') + '</div>';
+            if (changes.encoded_columns)
+                html += '<div class="change-item"><b>Encoded categoricals:</b> ' + Object.keys(changes.encoded_columns).join(', ') + '</div>';
+            if (changes.target_column_renamed)
+                html += '<div class="change-item"><b>Target column:</b> ' + changes.target_column_renamed.from + ' \u2192 ' + changes.target_column_renamed.to + '</div>';
+            box.innerHTML = html;
+        }
+
+        async function previewNormalization() {
+            const objectName = document.getElementById('object-name').value.trim();
+            const bucket = document.getElementById('preview-bucket').value;
+            const confirmBtn = document.getElementById('confirm-btn');
+            const samplesCard = document.getElementById('samples-card');
+            const shapeLine = document.getElementById('shape-line');
+
+            confirmBtn.classList.add('hidden');
+            samplesCard.classList.add('hidden');
+            shapeLine.classList.add('hidden');
+
+            if (!bucket) { toast('Select a bucket', 'error'); return; }
+            if (!objectName) { toast('Enter a CSV filename', 'error'); return; }
+
+            toast('Running preview...');
+
+            try {
+                const r = await fetch('http://localhost:5003/normalize/preview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username, object_name: objectName, container_name: bucket })
+                });
+                const data = await r.json();
+
+                if (!r.ok) { toast('Error: ' + (data.error || r.status), 'error'); return; }
+
+                currentFile = objectName;
+                currentBucket = bucket;
+                shapeLine.textContent = data.shape.rows + ' rows \u00d7 ' + data.shape.columns + ' cols';
+                shapeLine.classList.remove('hidden');
+                renderChanges(data.changes);
+
+                document.getElementById('original-table').innerHTML = renderTable(data.original_sample);
+                document.getElementById('cleaned-table').innerHTML = renderTable(data.cleaned_sample);
+                samplesCard.classList.remove('hidden');
+                confirmBtn.classList.remove('hidden');
+                toast('Preview ready');
+            } catch(e) {
+                toast('Failed to fetch — is the service running on 5003?', 'error');
+            }
+        }
+
+        async function confirmNormalization() {
+            if (!currentFile) { toast('Preview a file first', 'error'); return; }
+            toast('Saving to clean zone...');
+            try {
+                const r = await fetch('http://localhost:5003/normalize/confirm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username, object_name: currentFile, container_name: currentBucket })
+                });
+                const data = await r.json();
+                if (!r.ok) { toast('Error: ' + (data.error || r.status), 'error'); return; }
+                toast('Saved: ' + data.clean_file);
+            } catch(e) {
+                toast('Failed to fetch — is the service running?', 'error');
+            }
+        }
+
+        async function loadAvatarUsage() {
+            if (!username) return;
+            try {
+                const r = await fetch('http://localhost:5002/usage?username=' + encodeURIComponent(username));
+                const d = await r.json();
+                const used = d.used_bytes || 0;
+                const limit = d.limit_bytes;
+                const fill = document.getElementById('avatarVbarFill');
+                const bar = document.getElementById('avatarVbar');
+                if (!fill) return;
+                let pct = limit ? Math.min(100, (used / limit) * 100) : 0;
+                fill.style.height = pct + '%';
+                let color = pct >= 100 ? '#ff5566' : (pct >= 80 ? '#f0c040' : '#00e5ff');
+                fill.style.background = color;
+                if (bar) bar.title = 'Storage: ' + pct.toFixed(0) + '% used';
+            } catch(e) { /* storage service may be down */ }
+        }
+
+        loadUser();
+    </script>
+</body>
+</html>

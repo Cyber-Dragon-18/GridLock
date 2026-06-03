@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="icon" type="image/z-icon" href="logo_branco.png">   
+ 	<title>MyCloud — Database</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0d0d0d; color: #f0f0f8; font-family: sans-serif; min-height: 100vh; }
+        nav { display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; height: 56px; background: #111827; border-bottom: 1px solid #1e3a4a; }
+        .logo { font-size: 18px; font-weight: bold; color: #f0f0f8; }
+        .logo span { color: #00e5ff; }
+        .nav-links { display: flex; gap: 4px; }
+        .nav-links a { padding: 6px 14px; border-radius: 8px; font-size: 14px; color: #6b7280; text-decoration: none; transition: all 0.15s; }
+        .nav-links a:hover, .nav-links a.active { color: #f0f0f8; background: #1f2937; }
+        .nav-right { display: flex; align-items: center; }
+        .usage-vbar { width: 6px; height: 40px; background: #1f2937; border-radius: 4px; overflow: hidden; display: flex; align-items: flex-end; }
+        .usage-vbar-fill { width: 100%; height: 0%; background: #00e5ff; border-radius: 4px; transition: height 0.4s, background 0.4s; }
+        .btn-avatar { width: 38px; height: 38px; border-radius: 50%; background: #1a73e8; border: none; color: white; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+        .hero { padding: 2rem 0; margin-bottom: 2rem; border-bottom: 1px solid #1e3a4a; }
+        .hero h1 { font-size: 32px; font-weight: bold; margin-bottom: 6px; }
+        .hero h1 span { color: #00e5ff; }
+        .hero p { color: #6b7280; font-size: 15px; }
+        .tabs { display: flex; gap: 4px; border-bottom: 1px solid #1e3a4a; margin-bottom: 1.5rem; }
+        .tab { background: none; border: none; border-bottom: 2px solid transparent; padding: 8px 16px; color: #6b7280; font-size: 14px; font-family: sans-serif; cursor: pointer; margin-bottom: -1px; transition: all 0.15s; }
+        .tab.active { color: #00e5ff; border-bottom-color: #00e5ff; }
+        .panel { display: none; }
+        .panel.active { display: block; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
+        .card { background: #111827; border: 1px solid #1e3a4a; border-radius: 16px; padding: 1.5rem; }
+        .card.full { grid-column: 1 / -1; }
+        .card-title { font-size: 13px; font-weight: bold; color: #00e5ff; margin-bottom: 1rem; font-family: monospace; }
+        label { display: block; font-size: 12px; color: #6b7280; margin-bottom: 5px; margin-top: 12px; }
+        label:first-of-type { margin-top: 0; }
+        input, textarea { width: 100%; padding: 9px 12px; background: #1f2937; border: 1px solid #374151; border-radius: 8px; color: #fff; font-size: 14px; font-family: sans-serif; outline: none; transition: border 0.15s; }
+        input:focus, textarea:focus { border-color: #00e5ff; }
+        textarea { font-family: monospace; resize: vertical; min-height: 90px; }
+        button { margin-top: 1rem; width: 100%; padding: 10px; background: #00e5ff; border: none; border-radius: 8px; color: #000; font-size: 14px; font-weight: bold; font-family: sans-serif; cursor: pointer; transition: opacity 0.15s; }
+        button:hover { opacity: 0.85; }
+        button.secondary { background: #1f2937; border: 1px solid #374151; color: #f0f0f8; font-weight: normal; }
+        button.danger { background: rgba(255,85,102,0.15); border: 1px solid #ff5566; color: #ff5566; font-weight: normal; }
+        .empty-msg { color: #6b7280; font-size: 13px; margin-top: 8px; }
+        .info-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1e3a4a; font-size: 13px; }
+        .info-row span:first-child { color: #6b7280; }
+        .info-row span:last-child { color: #f0f0f8; font-family: monospace; }
+        .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .badge.running { background: rgba(0,229,160,0.15); color: #00e5a0; }
+        .badge.stopped { background: rgba(255,85,102,0.15); color: #ff5566; }
+        .badge.none { background: #1f2937; color: #6b7280; }
+        .pw-box { background: rgba(255,180,0,0.1); border: 1px solid #d9a400; border-radius: 8px; padding: 10px; margin-top: 12px; font-size: 12px; }
+        .pw-box b { color: #f0c040; }
+        .pw-val { font-family: monospace; color: #fff; word-break: break-all; display: block; margin-top: 4px; }
+        .list-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: #1f2937; border-radius: 8px; margin-bottom: 6px; font-size: 13px; }
+        .table-wrap { overflow-x: auto; margin-top: 12px; }
+        table { border-collapse: collapse; font-size: 12px; width: 100%; }
+        th, td { border: 1px solid #1e3a4a; padding: 5px 8px; text-align: left; white-space: nowrap; }
+        th { background: #1f2937; color: #00e5ff; font-family: monospace; }
+        td { color: #f0f0f8; }
+        .query-result { font-family: monospace; font-size: 13px; color: #00e5a0; margin-top: 12px; }
+        .hidden { display: none; }
+        .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #1f2937; border: 1px solid #374151; border-radius: 8px; padding: 10px 20px; font-size: 13px; color: #00e5a0; z-index: 999; display: none; }
+        .toast.error { color: #ff5566; border-color: #ff5566; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo"><img src="logo_branco.png" style="height:50px;vertical-align:middle;margin-right:8px"><a href="dashboard.html" style="text-decoration:none;"><span>GridLock</span></a></div>
+        <div class="nav-right">
+            <div style="display:flex;align-items:center;gap:8px;"><div class="usage-vbar" id="avatarVbar" title="Storage usage"><div class="usage-vbar-fill" id="avatarVbarFill"></div></div><button class="btn-avatar" id="navAvatar" onclick="window.location.href='dashboard.html'">?</button></div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="hero">
+            <h1>Database <span>Service</span></h1>
+            <p>PostgreSQL instance per user — port 5004</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('instance')">Instance</button>
+            <button class="tab" onclick="switchTab('query')">Query</button>
+        </div>
+
+        <!-- Instance Panel -->
+        <div class="panel active" id="panel-instance">
+            <div class="grid">
+                <div class="card">
+                    <div class="card-title">// my database</div>
+                    <div id="info-box"><p class="empty-msg">Loading...</p></div>
+                    <button onclick="provisionDb()" id="provision-btn">Provision Database</button>
+                    <button onclick="confirmDeprovision()" class="danger" id="deprovision-btn">Deprovision (delete) Database</button>
+                    <div class="pw-box hidden" id="pw-box">
+                        <b>⚠️ Save this password now — it is shown only once.</b>
+                        <span class="pw-val" id="pw-val"></span>
+                        It's needed for every query. A page refresh loses it.
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">// all instances (admin)</div>
+                    <button onclick="loadList()" class="secondary" style="margin-top:0">Refresh</button>
+                    <div id="db-list" style="margin-top:1rem;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Query Panel -->
+        <div class="panel" id="panel-query">
+            <div class="grid">
+                <div class="card full">
+                    <div class="card-title">// run SQL</div>
+                    <label>DB Password</label>
+                    <input type="password" id="query-pw" placeholder="auto-filled if provisioned this session">
+                    <label>SQL Query</label>
+                    <textarea id="query-sql" placeholder="SELECT * FROM my_table;"></textarea>
+                    <button onclick="runQuery()">Run Query</button>
+                    <div class="query-result hidden" id="query-status"></div>
+                    <div class="table-wrap" id="query-table"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- Confirm Modal -->
+    <div class="modal-overlay" id="modalOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:100;"></div>
+    <div class="modal" id="confirmModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#111827;border:1px solid #1e3a4a;border-radius:16px;padding:2rem;width:360px;z-index:101;text-align:center;">
+        <h3 style="color:#ff5566;font-size:16px;margin-bottom:0.5rem;">⚠️ Deprovision</h3>
+        <p style="color:#6b7280;font-size:14px;margin-bottom:1.5rem;">This permanently deletes your database and all its data. Continue?</p>
+        <div style="display:flex;gap:8px;">
+            <button class="danger" style="margin-top:0;" onclick="doDeprovision()">Delete</button>
+            <button class="secondary" style="margin-top:0;" onclick="closeConfirm()">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = 'auth.html';
+
+        let username = '';
+        let dbPassword = null;  // captured at provision, only this session
+
+        async function loadUser() {
+            try {
+                const res = await fetch('http://localhost:5001/profile', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await res.json();
+                username = data.email;
+                document.getElementById('navAvatar').textContent = data.first_name.charAt(0).toUpperCase();
+                document.getElementById('navAvatar').style.background = data.avatar_color || '#1a73e8';
+                loadAvatarUsage();
+                await loadInfo();
+                await loadList();
+            } catch(e) { console.log('Could not load profile'); }
+        }
+
+        function switchTab(name) {
+            const order = ['instance', 'query'];
+            document.querySelectorAll('.tab').forEach(function(t, i) {
+                t.classList.toggle('active', order[i] === name);
+            });
+            document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+            document.getElementById('panel-' + name).classList.add('active');
+        }
+
+        function toast(msg, type) {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.className = 'toast' + (type === 'error' ? ' error' : '');
+            el.style.display = 'block';
+            setTimeout(function(){ el.style.display = 'none'; }, 3500);
+        }
+
+        function badge(status) {
+            if (status === 'running') return '<span class="badge running">running</span>';
+            if (status === 'not_provisioned' || status === 'none') return '<span class="badge none">not provisioned</span>';
+            return '<span class="badge stopped">' + status + '</span>';
+        }
+
+        async function loadInfo() {
+            const box = document.getElementById('info-box');
+            const provBtn = document.getElementById('provision-btn');
+            const deprovBtn = document.getElementById('deprovision-btn');
+            try {
+                const r = await fetch('http://localhost:5004/database/info?username=' + encodeURIComponent(username));
+                const d = await r.json();
+                if (d.status === 'not_provisioned') {
+                    box.innerHTML = '<div class="info-row"><span>Status</span>' + badge('none') + '</div>';
+                    provBtn.classList.remove('hidden');
+                    deprovBtn.classList.add('hidden');
+                } else {
+                    box.innerHTML =
+                        '<div class="info-row"><span>Status</span>' + badge(d.status) + '</div>' +
+                        '<div class="info-row"><span>Host</span><span>' + d.host + '</span></div>' +
+                        '<div class="info-row"><span>Port</span><span>' + d.port + '</span></div>' +
+                        '<div class="info-row"><span>Database</span><span>' + d.db_name + '</span></div>' +
+                        '<div class="info-row"><span>User</span><span>' + d.db_user + '</span></div>' +
+                        '<div class="info-row"><span>Container</span><span>' + d.container + '</span></div>';
+                    provBtn.classList.add('hidden');
+                    deprovBtn.classList.remove('hidden');
+                }
+            } catch(e) {
+                box.innerHTML = '<p class="empty-msg">Could not reach service on 5004</p>';
+            }
+        }
+
+        async function provisionDb() {
+            toast('Provisioning — this can take ~20s...');
+            try {
+                const r = await fetch('http://localhost:5004/database/provision', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username })
+                });
+                const d = await r.json();
+                if (!r.ok) { toast('Error: ' + (d.error || r.status), 'error'); return; }
+
+                if (d.status === 'provisioned' && d.password) {
+                    dbPassword = d.password;
+                    document.getElementById('pw-val').textContent = d.password;
+                    document.getElementById('pw-box').classList.remove('hidden');
+                    document.getElementById('query-pw').value = d.password;
+                    toast('Database provisioned!');
+                } else {
+                    toast('Database ' + d.status);
+                }
+                await loadInfo();
+                await loadList();
+            } catch(e) {
+                toast('Failed to fetch — is the service running on 5004?', 'error');
+            }
+        }
+
+        function confirmDeprovision() {
+            document.getElementById('confirmModal').style.display = 'block';
+            document.getElementById('modalOverlay').style.display = 'block';
+        }
+        function closeConfirm() {
+            document.getElementById('confirmModal').style.display = 'none';
+            document.getElementById('modalOverlay').style.display = 'none';
+        }
+
+        async function doDeprovision() {
+            closeConfirm();
+            toast('Deprovisioning...');
+            try {
+                const r = await fetch('http://localhost:5004/database/deprovision', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username })
+                });
+                const d = await r.json();
+                dbPassword = null;
+                document.getElementById('pw-box').classList.add('hidden');
+                document.getElementById('query-pw').value = '';
+                toast('Database ' + d.status);
+                await loadInfo();
+                await loadList();
+            } catch(e) {
+                toast('Failed to fetch', 'error');
+            }
+        }
+
+        async function loadList() {
+            const list = document.getElementById('db-list');
+            try {
+                const r = await fetch('http://localhost:5004/database/list');
+                const dbs = await r.json();
+                if (!dbs.length) { list.innerHTML = '<p class="empty-msg">No databases running</p>'; return; }
+                list.innerHTML = dbs.map(function(db) {
+                    return '<div class="list-item"><span>🐘 ' + db.owner + '</span>' + badge(db.status) + '</div>';
+                }).join('');
+            } catch(e) {
+                list.innerHTML = '<p class="empty-msg">Could not load list</p>';
+            }
+        }
+
+        async function runQuery() {
+            const pw = document.getElementById('query-pw').value || dbPassword;
+            const query = document.getElementById('query-sql').value.trim();
+            const statusEl = document.getElementById('query-status');
+            const tableEl = document.getElementById('query-table');
+
+            statusEl.classList.add('hidden');
+            tableEl.innerHTML = '';
+
+            if (!pw) { toast('Enter your DB password', 'error'); return; }
+            if (!query) { toast('Enter a SQL query', 'error'); return; }
+
+            toast('Running query...');
+            try {
+                const r = await fetch('http://localhost:5004/database/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username, password: pw, query: query })
+                });
+                const d = await r.json();
+
+                statusEl.classList.remove('hidden');
+                if (d.status === 'error') {
+                    statusEl.style.color = '#ff5566';
+                    statusEl.textContent = 'Error: ' + d.message;
+                    return;
+                }
+                statusEl.style.color = '#00e5a0';
+
+                if (d.columns) {
+                    statusEl.textContent = d.row_count + ' row(s) returned';
+                    let html = '<table><thead><tr>' + d.columns.map(function(c){ return '<th>' + c + '</th>'; }).join('') + '</tr></thead><tbody>';
+                    d.rows.forEach(function(row) {
+                        html += '<tr>' + d.columns.map(function(c){ return '<td>' + (row[c] === null ? 'NULL' : row[c]) + '</td>'; }).join('') + '</tr>';
+                    });
+                    tableEl.innerHTML = html + '</tbody></table>';
+                } else {
+                    statusEl.textContent = (d.rows_affected != null ? d.rows_affected : 0) + ' row(s) affected';
+                }
+            } catch(e) {
+                toast('Failed to fetch — is the service running on 5004?', 'error');
+            }
+        }
+
+        async function loadAvatarUsage() {
+            if (!username) return;
+            try {
+                const r = await fetch('http://localhost:5002/usage?username=' + encodeURIComponent(username));
+                const d = await r.json();
+                const used = d.used_bytes || 0;
+                const limit = d.limit_bytes;
+                const fill = document.getElementById('avatarVbarFill');
+                const bar = document.getElementById('avatarVbar');
+                if (!fill) return;
+                let pct = limit ? Math.min(100, (used / limit) * 100) : 0;
+                fill.style.height = pct + '%';
+                let color = pct >= 100 ? '#ff5566' : (pct >= 80 ? '#f0c040' : '#00e5ff');
+                fill.style.background = color;
+                if (bar) bar.title = 'Storage: ' + pct.toFixed(0) + '% used';
+            } catch(e) { /* storage service may be down */ }
+        }
+
+        loadUser();
+    </script>
+</body>
+</html>

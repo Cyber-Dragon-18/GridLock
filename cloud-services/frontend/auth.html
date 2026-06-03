@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="widht=device-width, inicial-sclae=1.0">
+        <title>GridLock</title>
+	<link rel="icon" type="image/x-icon" href="logo_branco.png"> 
+        <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0d0d0d;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: sans-serif;
+        }
+
+        .card {
+            background: #111827;
+            border: 1px solid #1e3a4a;
+            border-radius: 16px;
+            padding: 2rem;
+            width: 420px;
+        }
+
+        .brand {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00e5ff;
+            margin-bottom: 6px;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 1.5rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            border-bottom: 1px solid #1e3a4a;
+            margin-bottom: 1.5rem;
+        }
+
+        .tab {
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            padding: 8px 4px;
+            color: #6b7280;
+            font-size: 15px;
+            cursor: pointer;
+            margin-bottom: -1px;
+        }
+
+        .tab.active {
+            color: #00e5ff;
+            border-bottom-color: #00e5ff;
+            font-weight: bold;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            color: #6b7280;
+            letter-spacing: 0.1em;
+            margin-bottom: 6px;
+            margin-top: 1rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        input:focus {
+            border-color: #00e5ff;
+        }
+
+        .btn-main {
+            width: 100%;
+            margin-top: 1.5rem;
+            padding: 14px;
+            background: #00e5ff;
+            border: none;
+            border-radius: 8px;
+            color: #000;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-main:hover {
+            opacity: 0.85;
+        }
+
+        #response {
+            margin-top: 1rem;
+            font-size: 13px;
+            color: #00e5ff;
+            text-align: center;
+        }
+
+        #response.error {
+            color: #ff5566;
+        }
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <div class="brand">
+               <img src="logo_branco.png" style="height:100px; display:block; margin:0 auto;">
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('login')">Sign In</button>
+                <button class="tab" onclick="switchTab('register')">Register</button>
+            </div>
+
+            <div id="login-form">
+                <label>EMAIL</label>
+                <input type="email" id="login-email" placeholder="your@email.com">
+                <label>PASSWORD</label>
+                <input type="password" id="login-pass" placeholder="*******">
+                <button class="btn-main" onclick="login()">Sign In</button>
+            </div>
+
+            <div id="register-form" style="display: none">
+                <label>FIRST NAME</label>
+                <input type="text" id="reg-first" placeholder="Max">
+                <label>LAST NAME</label>
+                <input type="text" id="reg-last" placeholder="Verstappen">
+                <label>EMAIL</label>
+                <input type="email" id="reg-email" placeholder="max.verstappen3@redbull.com">
+                <label>PASSWORD</label>
+                <input type="password" id="reg-pass" placeholder="******">
+                <button class="btn-main" onclick="register()">Register</button>
+            </div>
+
+            <div id="response"></div>
+
+        </div>
+
+        <script>
+        function switchTab(tab) {
+            document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
+            document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
+            document.querySelectorAll('.tab').forEach((t, i) => {
+            t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
+            });
+        }
+
+        async function login() {
+            const res = document.getElementById('response');
+            res.className = '';
+            try {
+            const r = await fetch('http://localhost:5001/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                email: document.getElementById('login-email').value,
+                password: document.getElementById('login-pass').value
+                })
+            });
+            const data = await r.json();
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+                res.textContent = '✓ Login successful! Redirecting...';
+                setTimeout(() => window.location.href = 'dashboard.html', 1000);
+            } else {
+                res.className = 'error';
+                res.textContent = data.error || 'Login failed';
+            }
+            } catch(e) {
+            res.className = 'error';
+            res.textContent = 'Could not connect to auth service';
+            }
+        }
+
+        async function register() {
+            const res = document.getElementById('response');
+            res.className = '';
+            try {
+            const r = await fetch('http://localhost:5001/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                first_name: document.getElementById('reg-first').value,
+                last_name: document.getElementById('reg-last').value,
+                email: document.getElementById('reg-email').value,
+                password: document.getElementById('reg-pass').value
+                })
+            });
+            const data = await r.json();
+            if (r.status === 201) {
+                res.textContent = '✓ Registered! You can now sign in.';
+                switchTab('login');
+            } else {
+                res.className = 'error';
+                res.textContent = data.error || 'Registration failed';
+            }
+            } catch(e) {
+            res.className = 'error';
+            res.textContent = 'Could not connect to auth service';
+            }
+        }
+        </script>
+    </body>
+</html>
