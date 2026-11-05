@@ -138,4 +138,4 @@ cloud-services/
 
 ## Author
 
-Rodrigo Coelho · [GitHub](https://github.com/Cyber-Dragon-18) · [Website](https://cyber-dragon-18.github.io) | Catarina Aguiar [GitHub](https://github.com/catarina-aguiar)
+Rodrigo Coelho · [GitHub](https://github.com/Cyber-Dragon-18) · [Website](https://cyber-dragon-18.github.io) | Catarina Aguiar · [GitHub](https://github.com/catarina-aguiar)
